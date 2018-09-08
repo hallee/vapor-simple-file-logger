@@ -12,6 +12,8 @@ dependencies: [
 ],
 ```
 
+And add `"SimpleFileLogger"` as a dependency to your app's target.
+
 ## Setup
 
 In `configure.swift`:
