@@ -1,6 +1,31 @@
-# SimpleFileLogger for Vapor
+<p align="center">
+    <a href="https://vapor.codes">
+        <img src="Logo.svg" width="361" height="64" alt="Simple File Logger Logo">
+    </a>
+    <br>
+    <br>
+    <a href="https://vapor.codes">
+        <img src="http://img.shields.io/badge/vapor-3.0-brightgreen.svg" alt="Vapor 3">
+    </a>
+    <a href="https://swift.org">
+        <img src="http://img.shields.io/badge/swift-4.1-brightgreen.svg" alt="Swift 4.1">
+    </a>
+    <a href="LICENSE">
+        <img src="http://img.shields.io/badge/license-MIT-brightgreen.svg" alt="MIT License">
+    </a>
+</p>
+
+## Overview
 
 A simple [Vapor](https://vapor.codes) `Logger` provider for outputting server logs to log files.
+
+Simple File Logger outputs separate files based on the log's `LogLevel`. Debug logs are output to `debug.log`, error logs to `error.log`, and so on. By default, logs are output to:
+
+| Linux | macOS |
+| ----- | ----- |
+| `/var/log/Vapor/` | `~/Library/Caches/Vapor/` |
+
+You can change `Vapor/` to an arbitrary directory by changing the `executableName` during setup.
 
 ## Installation
 
@@ -49,13 +74,3 @@ router.get(PathComponent.catchall) { req in
     logger?.debug(req.description)
 }
 ```
-
-SimpleFileLogger outputs separate files based on the log's `LogLevel`. Debug logs are output to `debug.log`, error logs to `error.log`, and so on.
-
-By default, logs are output to:
-
-| Linux | macOS |
-| ----- | ----- |
-| `/var/log/Vapor/` | `~/Library/Caches/Vapor/` |
-
-You can change `Vapor/` to an arbitrary directory by changing the `executableName` during setup.
