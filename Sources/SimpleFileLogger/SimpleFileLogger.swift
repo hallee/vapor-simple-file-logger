@@ -12,7 +12,8 @@ public final class SimpleFileLogger: Logger {
     let executableName: String
     let includeTimestamps: Bool
     let fileManager = FileManager.default
-    let fileQueue = DispatchQueue.init(label: "vaporSimpleFileLogger", qos: .utility, attributes: .concurrent)
+    let fileQueue = DispatchQueue.init(label: "vaporSimpleFileLogger", qos: .utility)
+    var fileHandles = [URL: Foundation.FileHandle]()
     lazy var logDirectoryURL: URL? = {
         var baseURL: URL?
         #if os(macOS)
@@ -43,6 +44,12 @@ public final class SimpleFileLogger: Logger {
         self.includeTimestamps = includeTimestamps
     }
     
+    deinit {
+        for (_, handle) in fileHandles {
+            handle.closeFile()
+        }
+    }
+    
     public func log(_ string: String, at level: LogLevel, file: String, function: String, line: UInt, column: UInt) {
         let fileName = level.description.lowercased() + ".log"
         var output = "[ \(level.description) ] \(string) (\(file):\(line))"
@@ -55,24 +62,35 @@ public final class SimpleFileLogger: Logger {
     func saveToFile(_ string: String, fileName: String) {
         guard let baseURL = logDirectoryURL else { return }
         
-        fileQueue.async(flags: .barrier) {
-            let url = baseURL.appendingPathComponent(fileName)
+        fileQueue.async {
+            let url = baseURL.appendingPathComponent(fileName, isDirectory: false)
             let output = string + "\n"
+            
             do {
                 if !self.fileManager.fileExists(atPath: url.path) {
                     try output.write(to: url, atomically: true, encoding: .utf8)
                 } else {
-                    let fileHandle = try FileHandle(forWritingTo: url)
+                    let fileHandle = try self.fileHandle(for: url)
                     fileHandle.seekToEndOfFile()
                     if let data = output.data(using: .utf8) {
                         fileHandle.write(data)
-                        fileHandle.closeFile()
                     }
-                    
                 }
             } catch {
                 print("SimpleFileLogger could not write to file \(url).")
             }
+        }
+    }
+    
+    /// Retrieves an opened FileHandle for the given file URL,
+    /// or creates a new one.
+    func fileHandle(for url: URL) throws -> Foundation.FileHandle {
+        if let opened = fileHandles[url] {
+            return opened
+        } else {
+            let handle = try FileHandle(forWritingTo: url)
+            fileHandles[url] = handle
+            return handle
         }
     }
     
