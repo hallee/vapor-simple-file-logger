@@ -8,7 +8,7 @@
 import Vapor
 
 public final class SimpleFileLogger: Logger {
-    
+
     let executableName: String
     let includeTimestamps: Bool
     let fileManager = FileManager.default
@@ -25,7 +25,7 @@ public final class SimpleFileLogger: Logger {
         #if os(Linux)
         baseURL = URL(fileURLWithPath: "/var/log/")
         #endif
-        
+
         /// Append executable name; ~/Library/Caches/executableName/ (macOS),
         /// or /var/log/executableName/ (Linux)
         do {
@@ -34,22 +34,22 @@ public final class SimpleFileLogger: Logger {
                 baseURL = executableURL
             }
         } catch { print("Unable to create \(executableName) log directory.") }
-        
+
         return baseURL
     }()
-    
+
     public init(executableName: String = "Vapor", includeTimestamps: Bool = false) {
         // TODO: sanitize executableName for path use
         self.executableName = executableName
         self.includeTimestamps = includeTimestamps
     }
-    
+
     deinit {
         for (_, handle) in fileHandles {
             handle.closeFile()
         }
     }
-    
+
     public func log(_ string: String, at level: LogLevel, file: String, function: String, line: UInt, column: UInt) {
         let fileName = level.description.lowercased() + ".log"
         var output = "[ \(level.description) ] \(string) (\(file):\(line))"
@@ -58,14 +58,14 @@ public final class SimpleFileLogger: Logger {
         }
         saveToFile(output, fileName: fileName)
     }
-    
+
     func saveToFile(_ string: String, fileName: String) {
         guard let baseURL = logDirectoryURL else { return }
-        
+
         fileQueue.async {
             let url = baseURL.appendingPathComponent(fileName, isDirectory: false)
             let output = string + "\n"
-            
+
             do {
                 if !self.fileManager.fileExists(atPath: url.path) {
                     try output.write(to: url, atomically: true, encoding: .utf8)
@@ -81,7 +81,7 @@ public final class SimpleFileLogger: Logger {
             }
         }
     }
-    
+
     /// Retrieves an opened FileHandle for the given file URL,
     /// or creates a new one.
     func fileHandle(for url: URL) throws -> Foundation.FileHandle {
@@ -93,17 +93,17 @@ public final class SimpleFileLogger: Logger {
             return handle
         }
     }
-    
+
 }
 
 extension SimpleFileLogger: ServiceType {
-    
+
     public static var serviceSupports: [Any.Type] {
         return [Logger.self]
     }
-    
+
     public static func makeService(for worker: Container) throws -> SimpleFileLogger {
         return SimpleFileLogger()
     }
-    
+
 }
