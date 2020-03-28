@@ -14,6 +14,8 @@ public final class SimpleFileLogger: Logger {
     let fileManager = FileManager.default
     let fileQueue = DispatchQueue.init(label: "vaporSimpleFileLogger", qos: .utility)
     var fileHandles = [URL: Foundation.FileHandle]()
+    let excludeLogLevels: [LogLevel]
+
     lazy var logDirectoryURL: URL? = {
         var baseURL: URL?
         #if os(macOS)
@@ -38,10 +40,11 @@ public final class SimpleFileLogger: Logger {
         return baseURL
     }()
 
-    public init(executableName: String = "Vapor", includeTimestamps: Bool = false) {
+    public init(executableName: String = "Vapor", includeTimestamps: Bool = false, excludeLogLevels: [LogLevel] = []) {
         // TODO: sanitize executableName for path use
         self.executableName = executableName
         self.includeTimestamps = includeTimestamps
+        self.excludeLogLevels = excludeLogLevels
     }
 
     deinit {
@@ -51,6 +54,7 @@ public final class SimpleFileLogger: Logger {
     }
 
     public func log(_ string: String, at level: LogLevel, file: String, function: String, line: UInt, column: UInt) {
+        guard !excludeLogLevels.contains(where: { $0.description == level.description }) else { return }
         let fileName = level.description.lowercased() + ".log"
         var output = "[ \(level.description) ] \(string) (\(file):\(line))"
         if includeTimestamps {
